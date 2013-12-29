@@ -1,9 +1,14 @@
+"""
+This is just a messy script used for testing. Should add some proper example
+scripts. 
+"""
 import cdms2
 import numpy as np
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.basemap import interp 
 import matplotlib.pyplot as plt
-from vor import sph_to_car
+import vor
+#from vor import sph_to_car
 #http://matplotlib.org/basemap/users/mapcoords.html
 #http://earthpy.org/interpolation_between_grids_with_basemap.html
 

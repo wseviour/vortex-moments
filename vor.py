@@ -1,9 +1,23 @@
 '''
-HEADER INFO HERE
-
-Inputs: (field[lat, lon], lats, lons, edgevalue )
-
+(c) Copyright 2014 William Seviour. All Rights Reserved.
+     
+This file is part of vortex-moments. Please see README.md for more
+information, including citations. 
+ 
+vortex-moments is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+ 
+vortex-moments is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+ 
+You should have received a copy of the GNU General Public License
+along with vortex-moments.  If not, see <http://www.gnu.org/licenses/>.
 '''
+
 import numpy as np
 from scipy.interpolate import griddata  
 
@@ -13,15 +27,52 @@ DEGRAD = np.pi/180. # conversion of degrees to radians
 RADDEG = 180./np.pi # conversion of radians to degrees 
 
 
-def calc_moments(field, lats, lons, hemisphere, field_type, edge):
-
+   
+def calc_moments(field, lats, lons, hemisphere='NH', field_type='GPH', \
+                 edge=3.02e4):
+    """Main procedure for calculating vortex moments
+    
+    **Arguments**
+    
+    *field*
+        A :py:class:`numpy.ndarray` or :py:class:`numpy.ma.core.MasekdArray`
+        with two dimensions. The 0th dimension should represent latitude, and 
+        the 1st dimension longitude.
+        
+     *lats*
+        A one dimensional array or list with the latitude grid values for field
+    
+     *lons*
+        A one dimensional array or list with the longitude grid values for field
+        
+     **Optional Arguments:**
+     
+     *hemisphere* 
+        A string either 'NH' or 'SH' which sets the calculation to the northern 
+        or southern hemisphere respectively. Defaults to northern hemisphere.
+        
+     *field type*
+        A string either 'GPH' or 'PV' which allows moments to be calculated over 
+        geopotential heigh or potential vorticity respectively. Defaults to 
+        geopotential height
+        
+     *edge*
+        Value at the vortex edge. Defaults to 3.02e4m which is the climatological 
+        value of zonal-mean geopotential height at 10hPa, 60N in ERA-Interim.
+        
+     **Returns:**
+        A dictionary of moment diagnostic values.  
+            
+    """
     field_hem, lats_hem = select_hemisphere(field,lats,hemisphere)
     field_cart, x, y = sph_to_car(field_hem,lons,lats_hem,hemisphere)
     field_vtx = isolate_vortex(field_cart, edge, field_type)
     angle, aspect_ratio, equivalent_area, kurtosis, latcent, loncent = \
             moment_integrate(field_vtx, x, y,edge)
         
-    return angle, aspect_ratio, equivalent_area, kurtosis, latcent, loncent
+    return {'angle':angle, 'aspect_ratio':aspect_ratio, \
+            'equivalent_area':equivalent_area, 'kurtosis':kurtosis, \
+            'centroid_latitude':latcent, 'centroid_longitude':loncent}
 
 
 
@@ -69,7 +120,8 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
                 except NameError:                   
                     xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
                 else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat],y[ilon,ilat]))))
+                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
+                                                             y[ilon,ilat]))))
                  
             if hemisphere == 'SH':
                 x[ilon,ilat] = (np.cos(lons[ilon])*np.cos(lats[ilat]))/ \
@@ -82,7 +134,8 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
                 except NameError:                   
                     xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
                 else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat],y[ilon,ilat]))))
+                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
+                                                             y[ilon,ilat]))))
                                   
     cart_x_points = -1.+np.arange(len(lons))/(0.5*len(lons))             
     cart_y_points = -1.+np.arange(len(lons))/(0.5*len(lons))
@@ -119,6 +172,10 @@ def isolate_vortex(field_cart, edge, field_type='GPH'):
 
 
 def moment_integrate(vtx_field, x, y,edge):
+    """
+    Performs moment diagnostic calculations on cartesian field
+    """
+
     # x and y are cartesian gridpoints; vtx_field is cartesian field
     # edge is value on vortex edge 
 
@@ -180,11 +237,7 @@ def moment_integrate(vtx_field, x, y,edge):
     # Calculate excess kurtosis 
     kurtosis = M00 * (J40+2*J22+J04)/((J20+J02)**2) \
                          - (2./3.)*( (3*(ar**4)+2*(ar**2)+3) / (((ar**2)+1)**2) ) 
-
-    moments = {'phi_angle':angle, 'aspect_ratio':aspect_ratio, \
-               'equivalent_area':equivalent_area, 'kurtosis':kurtosis, \
-               'centroid_latitude':latcent, 'centroid_longitude':loncent}
-               
+                   
     return angle, aspect_ratio, equivalent_area, kurtosis, latcent, loncent 
                
     
