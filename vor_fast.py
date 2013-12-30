@@ -1,6 +1,4 @@
-'''
-(c) Copyright 2014 William Seviour. All Rights Reserved.
-     
+'''  
 This file is part of vortex-moments. Please see README.md for more
 information, including citations. 
  
