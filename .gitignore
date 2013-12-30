@@ -1,3 +1,8 @@
+test.py
+test.pro
+*~
+
+
 *.py[cod]
 
 # C extensions

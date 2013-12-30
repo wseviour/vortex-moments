@@ -1,6 +1,23 @@
 '''
-
+(c) Copyright 2014 William Seviour. All Rights Reserved.
+     
+This file is part of vortex-moments. Please see README.md for more
+information, including citations. 
+ 
+vortex-moments is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+ 
+vortex-moments is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+ 
+You should have received a copy of the GNU General Public License
+along with vortex-moments.  If not, see <http://www.gnu.org/licenses/>.
 '''
+
 import numpy as np
 from scipy.interpolate import griddata  
 
@@ -11,21 +28,59 @@ RADDEG = 180./np.pi # conversion of radians to degrees
 
 
    
-def calc_moments(field, lats, lons, hemisphere='NH', field_type='GPH', edge=3.02e4):
-
+def calc_moments(field, lats, lons, hemisphere='NH', field_type='GPH', \
+                 edge=3.02e4):
+    """Main procedure for calculating vortex moments
+    
+    **Arguments**
+    
+    *field*
+        A :py:class:`numpy.ndarray` or :py:class:`numpy.ma.core.MasekdArray`
+        with two dimensions. The 0th dimension should represent latitude, and 
+        the 1st dimension longitude.
+        
+     *lats*
+        A one dimensional array or list with the latitude grid values for field
+    
+     *lons*
+        A one dimensional array or list with the longitude grid values for field
+        
+     **Optional Arguments:**
+     
+     *hemisphere* 
+        A string either 'NH' or 'SH' which sets the calculation to the northern 
+        or southern hemisphere respectively. Defaults to northern hemisphere.
+        
+     *field type*
+        A string either 'GPH' or 'PV' which allows moments to be calculated over 
+        geopotential heigh or potential vorticity respectively. Defaults to 
+        geopotential height
+        
+     *edge*
+        Value at the vortex edge. Defaults to 3.02e4m which is the climatological 
+        value of zonal-mean geopotential height at 10hPa, 60N in ERA-Interim.
+        
+     **Returns:**
+        A dictionary of moment diagnostic values.  
+            
+    """
     field_hem, lats_hem = select_hemisphere(field,lats,hemisphere)
     field_cart, x, y = sph_to_car(field_hem,lons,lats_hem,hemisphere)
     field_vtx = isolate_vortex(field_cart, edge, field_type)
-    angle, aspect_ratio, equivalent_area, kurtosis, latcent, loncent = \
+    angle, aspect_ratio, objective_area, kurtosis, latcent, loncent = \
             moment_integrate(field_vtx, x, y,edge)
         
     return {'angle':angle, 'aspect_ratio':aspect_ratio, \
-            'equivalent_area':equivalent_area, 'kurtosis':kurtosis, \
+            'objective_area':objective_area, 'kurtosis':kurtosis, \
             'centroid_latitude':latcent, 'centroid_longitude':loncent}
 
 
 
 def select_hemisphere(field, lats, hemisphere):
+    """
+    Selects appropriate hemisphere in field and lats
+    """
+    
     if hemisphere == 'NH':
         latsh = lats[np.where(lats > 0)]
         fieldh = field[np.where(lats > 0),:].squeeze()
@@ -69,7 +124,8 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
                 except NameError:                   
                     xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
                 else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat],y[ilon,ilat]))))
+                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
+                                                             y[ilon,ilat]))))
                  
             if hemisphere == 'SH':
                 x[ilon,ilat] = (np.cos(lons[ilon])*np.cos(lats[ilat]))/ \
@@ -82,7 +138,8 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
                 except NameError:                   
                     xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
                 else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat],y[ilon,ilat]))))
+                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
+                                                             y[ilon,ilat]))))
                                   
     cart_x_points = -1.+np.arange(len(lons))/(0.5*len(lons))             
     cart_y_points = -1.+np.arange(len(lons))/(0.5*len(lons))
@@ -119,6 +176,10 @@ def isolate_vortex(field_cart, edge, field_type='GPH'):
 
 
 def moment_integrate(vtx_field, x, y,edge):
+    """
+    Performs moment diagnostic calculations on cartesian field
+    """
+
     # x and y are cartesian gridpoints; vtx_field is cartesian field
     # edge is value on vortex edge 
 
@@ -145,7 +206,8 @@ def moment_integrate(vtx_field, x, y,edge):
 
     # Convert back to polar coordinates 
     R = centx**2 + centy**2
-    loncent = 90. - np.arctan(centx/centy)*RADDEG
+    #loncent = 90. - np.arctan(centx/centy)*RADDEG
+    loncent = np.arctan(centx/centy)*RADDEG
     latcent = np.arcsin((1-R)/(1+R))*RADDEG
 
     # Set up relative moment diagnostics 
@@ -165,27 +227,24 @@ def moment_integrate(vtx_field, x, y,edge):
             J40 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**4)*((y[iy]-centy)**0)
             J04 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**0)*((y[iy]-centy)**4)   
 
-    # Calculate angle between x-axis and majoe axis of ellipse
-    angle = 0.5*np.arctan((2*J11)/(J20-J02))                
+    # Calculate angle between x-axis and major axis of ellipse
+    #angle = 0.5*np.arctan((2*J11)/(J20-J02))                
+    angle = 0.5*np.arctan((2*J11)/(J20-J02))*RADDEG
 
     # Calculate aspect ratio
     aspect_ratio = np.sqrt(abs(( (J20+J02) + np.sqrt(4*(J11**2)+(J20-J02)**2) ) / \
                                ( (J20+J02) - np.sqrt(4*(J11**2)+(J20-J02)**2) ))) 
     ar = aspect_ratio #short name for later calculation
 
-    # Calculate equivalent area
-    equivalent_area = Marea/edge 
+    # Calculate objective area
+    objective_area = Marea/edge 
 
 
     # Calculate excess kurtosis 
     kurtosis = M00 * (J40+2*J22+J04)/((J20+J02)**2) \
                          - (2./3.)*( (3*(ar**4)+2*(ar**2)+3) / (((ar**2)+1)**2) ) 
-
-    moments = {'phi_angle':angle, 'aspect_ratio':aspect_ratio, \
-               'equivalent_area':equivalent_area, 'kurtosis':kurtosis, \
-               'centroid_latitude':latcent, 'centroid_longitude':loncent}
-               
-    return angle, aspect_ratio, equivalent_area, kurtosis, latcent, loncent 
+                   
+    return angle, aspect_ratio, objective_area, kurtosis, latcent, loncent 
                
     
     

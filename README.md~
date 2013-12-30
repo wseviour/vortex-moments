@@ -1,24 +1,20 @@
-vortex-moments
+About
 ==============
 
-Script to calculate moment diagnostics for the stratospheric polar vortex. These
+Scripts to calculate moment diagnostics for the stratospheric polar vortex. These
 can be used, for instance, to diagnose split and displaced vortex events, as
-described in [_Seviour et al., 2013_](http://onlinelibrary.wiley.com/doi/10.1002/grl.50927/abstract)
+described in [_Seviour et al., 2013_](http://onlinelibrary.wiley.com/doi/10.1002/grl.50927/abstract).
 
-This repository contains two main scripts **vor.py** (a Python script) 
+* This repository contains two main scripts **vor.py** (a Python script) 
 and **vor.pro** (an IDL script). Both are able to calculate moment diagnostics.
-
-Example uses
-============
-
-**vor.py**
+* Required packages are ``numpy`` and ``scipy.interpolate``.
+* Example uses:
+**vor.py:**
 ```python
 import vor
 d = vor.calc_moments(field,lats,lons,'NH','GPH',29600) 
-
 ```
-
-**vor.pro**
+**vor.pro:**
 ``` IDL
 d=VOR(field,lon,lat,/GP,EDGE=3.02e4)
 ```

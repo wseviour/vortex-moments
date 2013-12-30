@@ -67,16 +67,20 @@ def calc_moments(field, lats, lons, hemisphere='NH', field_type='GPH', \
     field_hem, lats_hem = select_hemisphere(field,lats,hemisphere)
     field_cart, x, y = sph_to_car(field_hem,lons,lats_hem,hemisphere)
     field_vtx = isolate_vortex(field_cart, edge, field_type)
-    angle, aspect_ratio, equivalent_area, kurtosis, latcent, loncent = \
+    angle, aspect_ratio, objective_area, kurtosis, latcent, loncent = \
             moment_integrate(field_vtx, x, y,edge)
         
     return {'angle':angle, 'aspect_ratio':aspect_ratio, \
-            'equivalent_area':equivalent_area, 'kurtosis':kurtosis, \
+            'objective_area':objective_area, 'kurtosis':kurtosis, \
             'centroid_latitude':latcent, 'centroid_longitude':loncent}
 
 
 
 def select_hemisphere(field, lats, hemisphere):
+    """
+    Selects appropriate hemisphere in field and lats
+    """
+    
     if hemisphere == 'NH':
         latsh = lats[np.where(lats > 0)]
         fieldh = field[np.where(lats > 0),:].squeeze()
@@ -106,8 +110,8 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
 
     xyvals = np.empty(0)
 
-    for ilon in range(len(lons)-1): # -1s needed?
-        for ilat in range(len(lats)-1):
+    for ilon in range(len(lons)): # -1s needed?
+        for ilat in range(len(lats)):
             
             if hemisphere == 'NH':
                 x[ilon,ilat] = (np.cos(lons[ilon])*np.cos(lats[ilat]))/ \
@@ -202,7 +206,7 @@ def moment_integrate(vtx_field, x, y,edge):
 
     # Convert back to polar coordinates 
     R = centx**2 + centy**2
-    loncent = 90. - np.arctan(centx/centy)*RADDEG
+    loncent = np.arctan(centx/centy)*RADDEG
     latcent = np.arcsin((1-R)/(1+R))*RADDEG
 
     # Set up relative moment diagnostics 
@@ -222,23 +226,23 @@ def moment_integrate(vtx_field, x, y,edge):
             J40 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**4)*((y[iy]-centy)**0)
             J04 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**0)*((y[iy]-centy)**4)   
 
-    # Calculate angle between x-axis and majoe axis of ellipse
-    angle = 0.5*np.arctan((2*J11)/(J20-J02))                
+    # Calculate angle between x-axis and major axis of ellipse                  
+    angle = 0.5*np.arctan((2*J11)/(J20-J02))*RADDEG
 
     # Calculate aspect ratio
     aspect_ratio = np.sqrt(abs(( (J20+J02) + np.sqrt(4*(J11**2)+(J20-J02)**2) ) / \
                                ( (J20+J02) - np.sqrt(4*(J11**2)+(J20-J02)**2) ))) 
     ar = aspect_ratio #short name for later calculation
 
-    # Calculate equivalent area
-    equivalent_area = Marea/edge 
+    # Calculate objective area
+    objective_area = Marea/edge 
 
 
     # Calculate excess kurtosis 
     kurtosis = M00 * (J40+2*J22+J04)/((J20+J02)**2) \
                          - (2./3.)*( (3*(ar**4)+2*(ar**2)+3) / (((ar**2)+1)**2) ) 
                    
-    return angle, aspect_ratio, equivalent_area, kurtosis, latcent, loncent 
+    return angle, aspect_ratio, objective_area, kurtosis, latcent, loncent 
                
     
     
