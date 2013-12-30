@@ -9,6 +9,7 @@ described in [_Seviour et al., 2013_](http://onlinelibrary.wiley.com/doi/10.1002
 and **vor.pro** (an IDL script). Both are able to calculate moment diagnostics.
 * Required packages are ``numpy`` and ``scipy.interpolate``.
 * Example uses:
+
 **vor.py:**
 ```python
 import vor
@@ -18,7 +19,7 @@ d = vor.calc_moments(field,lats,lons,'NH','GPH',29600)
 ``` IDL
 d=VOR(field,lon,lat,/GP,EDGE=3.02e4)
 ```
-
+* For a full example of using vor.py, please see **moments_1979_example**. Note this may take about 10 minutes to run on a normal PC. 
 
 Citations
 =========
