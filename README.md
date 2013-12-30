@@ -19,7 +19,11 @@ d = vor.calc_moments(field,lats,lons,'NH','GPH',29600)
 ``` IDL
 d=VOR(field,lon,lat,/GP,EDGE=3.02e4)
 ```
-* For a full example of using vor.py, please see **moments_1979_example**. Note this may take about 10 minutes to run on a normal PC. 
+* For a full example of using vor.py, please see **moments_1979_example**. Note this may take about 15 minutes to run on a normal PC. 
+
+* There is now a faster verion **vor_fast.py** which is intended for calculating a timeseries over many timesteps. The lat/lon to cartesian mapping is calculated only once in this routine. **vor_fast_setup.py** must be run first to calculate this mapping. See **moments_fast_example.py** for an example of use. This runs in about 10 minutes (a 1/3 saving over vor.py). 
+
+The ``moment_integrate`` function is currently restricting speed the most. It might be possible to use more efficient integration algorithms. 
 
 Citations
 =========
