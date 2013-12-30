@@ -29,7 +29,7 @@ RADDEG = 180./np.pi # conversion of radians to degrees
 
    
 def calc_moments(field, lats, lons, xypoints, hemisphere='NH', field_type='GPH', \
-                 edge=3.02e4):
+                 edge=3.02e4, resolution='full'):
     """Main procedure for calculating vortex moments
     
     **Arguments**
@@ -67,7 +67,8 @@ def calc_moments(field, lats, lons, xypoints, hemisphere='NH', field_type='GPH',
         A dictionary of moment diagnostic values.  
             
     """
-    field_cart, x, y = sph_to_car(field,lons,lats,xypoints)
+    print 'Calculating for resolution: '+resolution
+    field_cart, x, y = sph_to_car(field,lons,lats,xypoints,resolution)
     field_vtx = isolate_vortex(field_cart, edge, field_type)
    
     aspect_ratio, latcent = moment_integrate(field_vtx, x, y,edge)
@@ -77,7 +78,7 @@ def calc_moments(field, lats, lons, xypoints, hemisphere='NH', field_type='GPH',
 
 
                                   
-def sph_to_car(field, lons, lats, xypoints):
+def sph_to_car(field, lons, lats, xypoints,resolution):
 
     xyvals = np.empty(0)
 
@@ -85,9 +86,16 @@ def sph_to_car(field, lons, lats, xypoints):
         for ilat in range(len(lats)):
                      
             xyvals = np.append(xyvals, field[ilat,ilon])
-            
-    cart_x_points = -1.+np.arange(len(lons))/(0.5*len(lons))             
-    cart_y_points = -1.+np.arange(len(lons))/(0.5*len(lons))
+     
+    if resolution == 'full':       
+        cart_x_points = -1.+np.arange(len(lons))/(0.5*len(lons))             
+        cart_y_points = -1.+np.arange(len(lons))/(0.5*len(lons))
+    elif resolution == 'low':
+        cart_x_points = -1.+np.arange(50)/(0.5*50)
+        cart_y_points = -1.+np.arange(50)/(0.5*50)
+    else:
+        raise ValueError()
+    
     cart_gridx, cart_gridy = np.meshgrid(cart_x_points,cart_y_points)
 
     field_cart = griddata(xypoints, xyvals, (cart_gridx,cart_gridy), \
