@@ -1,8 +1,8 @@
 """
-This example uses vor.py to plot geopotential height derived moment diagnostics 
+This example uses vor.py to plot geopotential height derived moment diagnostics
 for Feb-Mar 1979. This covers the splitting event around 21st February
 
-** Using a faster method ** (takes approx. 10 mins)
+** Using a faster method ** (takes approx. 2:30 mins)
 """
 
 from netCDF4 import Dataset
@@ -25,26 +25,23 @@ gph_nh, lats_nh, xypoints = vor_fast_setup.setup(gph,lats,lons,'NH')
 # Set up moment diagnostics
 aspect = np.empty(0)
 latcent = np.empty(0)
-#aspect_low = np.empty(0)
-#latcent_low = np.empty(0)
+
 
 # Calculate diagnostics for each day
 for iday in range(len(days)):
     print 'Calculating moments for day '+str(iday)
-    moments = vor_fast.calc_moments(gph_nh[iday,:,:],lats_nh,lons,xypoints,'NH','GPH',3.02e4,'low') 
+    moments = vor_fast.calc_moments(gph_nh[iday,:,:],lats_nh,lons,xypoints,
+                                    hemisphere='NH',field_type='GPH',
+                                    edge=3.02e4,resolution='low')
     aspect = np.append(aspect, moments['aspect_ratio'])
     latcent = np.append(latcent, moments['centroid_latitude'])
-    #moments_low = vor_fast.calc_moments(gph_nh[iday,:,:],lats_nh,lons,xypoints,'NH','GPH',3.02e4, 'low')
-    #aspect_low = np.append(aspect_low, moments_low['aspect_ratio'])
-    #latcent_low = np.append(latcent_low, moments_low['centroid_latitude'])
 
-# Plot timeseries    
+
+# Plot timeseries
 plt.subplot(2,1,1)
 plt.plot(aspect)
-#plt.plot(aspect_low, linestyle='--')
 plt.title('Aspect ratio')
 plt.subplot(2,1,2)
-plt.plot(latcent) 
-#plt.plot(latcent_low, linestyle='--')
+plt.plot(latcent)
 plt.title('Centroid latitude')
 plt.show()
