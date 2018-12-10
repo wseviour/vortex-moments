@@ -131,16 +131,14 @@ def moment_integrate(vtx_field, x, y,edge):
     box_length = 2*A/len(x)
     box_area = box_length**2
 
-    # Set up moment diagnostics
-    M00 = 0
-    M10 = 0
-    M01 = 0
-    Marea = 0
+    # Set up coords
+    x = x[:,np.newaxis]
+    y = y[np.newaxis,:]
     # Integrate over vortex
-    M00 = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**0)*(y[np.newaxis,:]**0))
-    M10 = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**1)*(y[np.newaxis,:]**0))
-    M01 = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**0)*(y[np.newaxis,:]**1))
-    Marea = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**0)*(y[np.newaxis,:]**0)*box_area)
+    M00 = np.sum(np.abs(vtx_field-edge)*(x**0)*(y**0))
+    M10 = np.sum(np.abs(vtx_field-edge)*(x**1)*(y**0))
+    M01 = np.sum(np.abs(vtx_field-edge)*(x**0)*(y**1))
+    Marea = np.sum(np.abs(vtx_field-edge)*(x**0)*(y**0)*box_area)
             
     # Calculate centroid 
     centx = M10/M00
@@ -152,9 +150,9 @@ def moment_integrate(vtx_field, x, y,edge):
     latcent = np.arcsin((1-R)/(1+R))*RADDEG
 
     #Intergrate relative moment diagnostics 
-    J11 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**1)*((y[np.newaxis,:]-centy)**1))
-    J20 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**2)*((y[np.newaxis,:]-centy)**0))
-    J02 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**0)*((y[np.newaxis,:]-centy)**2)) 
+    J11 = np.sum(np.abs(vtx_field-edge)*((x-centx)**1)*((y-centy)**1))
+    J20 = np.sum(np.abs(vtx_field-edge)*((x-centx)**2)*((y-centy)**0))
+    J02 = np.sum(np.abs(vtx_field-edge)*((x-centx)**0)*((y-centy)**2)) 
 
 
     # Calculate aspect ratio
