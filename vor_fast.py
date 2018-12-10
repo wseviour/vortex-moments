@@ -73,21 +73,18 @@ def calc_moments(field, lats, lons, xypoints, hemisphere='NH', field_type='GPH',
         
     return {'aspect_ratio':aspect_ratio, 'centroid_latitude':latcent}
 
-
-
                                   
 def sph_to_car(field, lons, lats, xypoints,resolution):
+    nlons = len(lons)
+    nlats = len(lats)
+    xyvals = []
+    for ilon in range(nlons): # -1s needed?
+        for ilat in range(nlats):
+            xyvals.append(field[ilat,ilon])
 
-    xyvals = np.empty(0)
-
-    for ilon in range(len(lons)): # -1s needed?
-        for ilat in range(len(lats)):
-                     
-            xyvals = np.append(xyvals, field[ilat,ilon])
-     
     if resolution == 'full':       
-        cart_x_points = -1.+np.arange(len(lons))/(0.5*len(lons))             
-        cart_y_points = -1.+np.arange(len(lons))/(0.5*len(lons))
+        cart_x_points = -1.+np.arange(nlons)/(0.5*nlons)             
+        cart_y_points = -1.+np.arange(nlons)/(0.5*nlons)
     elif resolution == 'low':
         cart_x_points = -1.+np.arange(50)/(0.5*50)
         cart_y_points = -1.+np.arange(50)/(0.5*50)
@@ -140,13 +137,10 @@ def moment_integrate(vtx_field, x, y,edge):
     M01 = 0
     Marea = 0
     # Integrate over vortex
-    for ix in range(len(x)):
-        for iy in range(len(y)):
-            
-            M00 += abs(vtx_field[ix,iy]-edge)*(x[ix]**0)*(y[iy]**0) 
-            M10 += abs(vtx_field[ix,iy]-edge)*(x[ix]**1)*(y[iy]**0) 
-            M01 += abs(vtx_field[ix,iy]-edge)*(x[ix]**0)*(y[iy]**1)
-            Marea += abs(vtx_field[ix,iy]-edge)*(x[ix]**0)*(y[iy]**0)*box_area
+    M00 = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**0)*(y[np.newaxis,:]**0))
+    M10 = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**1)*(y[np.newaxis,:]**0))
+    M01 = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**0)*(y[np.newaxis,:]**1))
+    Marea = np.sum(np.abs(vtx_field-edge)*(x[:,np.newaxis]**0)*(y[np.newaxis,:]**0)*box_area)
             
     # Calculate centroid 
     centx = M10/M00
@@ -154,41 +148,23 @@ def moment_integrate(vtx_field, x, y,edge):
 
     # Convert back to polar coordinates 
     R = centx**2 + centy**2
-    #loncent = np.arctan(centx/centy)*RADDEG
+    #centroid latitude
     latcent = np.arcsin((1-R)/(1+R))*RADDEG
 
     # Set up relative moment diagnostics 
     J11=0
     J20=0
     J02=0
-    #J22=0
-    #J40=0
-    #J04=0
-    for ix in range(len(x)):
-        for iy in range(len(y)):
-            
-            J11 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**1)*((y[iy]-centy)**1)
-            J20 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**2)*((y[iy]-centy)**0)
-            J02 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**0)*((y[iy]-centy)**2)
-            #J22 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**2)*((y[iy]-centy)**2)
-            #J40 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**4)*((y[iy]-centy)**0)
-            #J04 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**0)*((y[iy]-centy)**4)   
+    #Intergrate
+    J11 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**1)*((y[np.newaxis,:]-centy)**1))
+    J20 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**2)*((y[np.newaxis,:]-centy)**0))
+    J02 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**0)*((y[np.newaxis,:]-centy)**2)) 
 
-    # Calculate angle between x-axis and major axis of ellipse                  
-    #angle = 0.5*np.arctan((2*J11)/(J20-J02))*RADDEG
 
     # Calculate aspect ratio
     aspect_ratio = np.sqrt(abs(( (J20+J02) + np.sqrt(4*(J11**2)+(J20-J02)**2) ) / \
                                ( (J20+J02) - np.sqrt(4*(J11**2)+(J20-J02)**2) ))) 
-    ar = aspect_ratio #short name for later calculation
 
-    # Calculate objective area
-    #objective_area = Marea/edge 
-
-
-    # Calculate excess kurtosis 
-    #kurtosis = M00 * (J40+2*J22+J04)/((J20+J02)**2) \
-    #                     - (2./3.)*( (3*(ar**4)+2*(ar**2)+3) / (((ar**2)+1)**2) ) 
                    
     return aspect_ratio, latcent 
                
