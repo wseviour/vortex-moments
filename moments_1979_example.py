@@ -6,6 +6,8 @@ WARNING: This takes about 15 mins to run
 """
 
 from netCDF4 import Dataset
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import vor
@@ -34,6 +36,7 @@ for iday in range(len(days)):
     obj_area = np.append(obj_area, moments['objective_area'])
     
 # Plot timeseries    
+fig = plt.figure(figsize = (12,9))
 plt.subplot(4,1,1)
 plt.plot(aspect)
 plt.title('Aspect ratio')
