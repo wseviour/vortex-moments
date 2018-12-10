@@ -29,7 +29,7 @@ latcent = np.empty(0)
 
 # Calculate diagnostics for each day
 for iday in range(len(days)):
-    print 'Calculating moments for day '+str(iday)
+    print('Calculating moments for day '+str(iday))
     moments = vor_fast.calc_moments(gph_nh[iday,:,:],lats_nh,lons,xypoints,
                                     hemisphere='NH',field_type='GPH',
                                     edge=3.02e4,resolution='low')
@@ -44,4 +44,4 @@ plt.title('Aspect ratio')
 plt.subplot(2,1,2)
 plt.plot(latcent)
 plt.title('Centroid latitude')
-plt.show()
+plt.savefig('test_fast.png')
