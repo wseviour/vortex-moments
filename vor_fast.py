@@ -93,7 +93,7 @@ def sph_to_car(field, lons, lats, xypoints,resolution):
     
     cart_gridx, cart_gridy = np.meshgrid(cart_x_points,cart_y_points)
 
-    field_cart = griddata(xypoints, xyvals, (cart_gridx,cart_gridy), \
+    field_cart = griddata(xypoints, np.array(xyvals), (cart_gridx,cart_gridy), \
                         method='linear')  # Might want to change to cubic etc?
                               
     return field_cart, cart_x_points, cart_y_points  
@@ -151,11 +151,7 @@ def moment_integrate(vtx_field, x, y,edge):
     #centroid latitude
     latcent = np.arcsin((1-R)/(1+R))*RADDEG
 
-    # Set up relative moment diagnostics 
-    J11=0
-    J20=0
-    J02=0
-    #Intergrate
+    #Intergrate relative moment diagnostics 
     J11 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**1)*((y[np.newaxis,:]-centy)**1))
     J20 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**2)*((y[np.newaxis,:]-centy)**0))
     J02 = np.sum(np.abs(vtx_field-edge)*((x[:,np.newaxis]-centx)**0)*((y[np.newaxis,:]-centy)**2)) 
