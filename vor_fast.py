@@ -65,7 +65,7 @@ def calc_moments(field, lats, lons, xypoints, hemisphere='NH', field_type='GPH',
         A dictionary of moment diagnostic values.  
             
     """
-    print 'Calculating for resolution: '+resolution
+    print('Calculating for resolution: '+resolution)
     field_cart, x, y = sph_to_car(field,lons,lats,xypoints,resolution)
     field_vtx = isolate_vortex(field_cart, edge, field_type)
    
