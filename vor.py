@@ -99,7 +99,7 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
     # Convert lats and lons to radians
     lons = lons * DEGRAD
     lats = lats * DEGRAD
-       nlons = len(lons)
+    nlons = len(lons)
     nlats = len(lats)
     nlon_nlat = nlons*nlats
     
@@ -113,6 +113,8 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
         
     else:
         raise ValueError()     
+      
+    xypoints = np.stack([x.reshape(nlon_nlat),y.reshape(nlon_nlat)], axis = 1)
       
     xyvals = []
     for ilon in range(nlons): # -1s needed?
