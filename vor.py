@@ -99,57 +99,36 @@ def sph_to_car(field, lons, lats, hemisphere='NH'):
     # Convert lats and lons to radians
     lons = lons * DEGRAD
     lats = lats * DEGRAD
-    x = np.zeros((len(lons), len(lats)))
-    y = np.zeros((len(lons), len(lats)))
-    try: 
-        del xypoints
-    except NameError:
-        pass 
-
-    xyvals = np.empty(0)
-
-    for ilon in range(len(lons)): # -1s needed?
-        for ilat in range(len(lats)):
-            
-            if hemisphere == 'NH':
-                x[ilon,ilat] = (np.cos(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. + np.sin(lats[ilat]))               
-                y[ilon,ilat] = (np.sin(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. + np.sin(lats[ilat]))
-                xyvals = np.append(xyvals, field[ilat,ilon])
-                try:
-                    xypoints
-                except NameError:                   
-                    xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
-                else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
-                                                             y[ilon,ilat]))))
-                 
-            if hemisphere == 'SH':
-                x[ilon,ilat] = (np.cos(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. - np.sin(lats[ilat]))               
-                y[ilon,ilat] = (-np.sin(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. - np.sin(lats[ilat]))            
-                xyvals = np.append(xyvals, field[ilat,ilon])
-                try:
-                    xypoints
-                except NameError:                   
-                    xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
-                else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
-                                                             y[ilon,ilat]))))
+    nlons = len(lons)
+    nlats = len(lats)
+    nlon_nlat = nlons*nlats
+    
+    if hemisphere == 'NH':
+        x = (np.cos(lons[:,np.newaxis])*np.cos(lats))/ (1. + np.sin(lats[np.newaxis,:]))               
+        y = (np.sin(lons[:,np.newaxis])*np.cos(lats[np.newaxis,:]))/(1. + np.sin(lats[np.newaxis,:]))
+          
+    elif hemisphere == 'SH':
+        x = (np.cos(lons[:,np.newaxis])*np.cos(lats[np.newaxis,:]))/(1. - np.sin(lats[np.newaxis,:]))               
+        y = (-np.sin(lons[:,np.newaxis])*np.cos(lats[np.newaxis,:]))/(1. - np.sin(lats[np.newaxis,:]))     
+        
+    else:
+        raise ValueError()     
+      
+    xypoints = np.stack([x.reshape(nlon_nlat),y.reshape(nlon_nlat)], axis = 1)
+      
+    xyvals = []
+    for ilon in range(nlons): # -1s needed?
+        for ilat in range(nlats):
+            xyvals.append(field[ilat,ilon])
                                   
     cart_x_points = -1.+np.arange(len(lons))/(0.5*len(lons))             
     cart_y_points = -1.+np.arange(len(lons))/(0.5*len(lons))
     cart_gridx, cart_gridy = np.meshgrid(cart_x_points,cart_y_points)
 
-    field_cart = griddata(xypoints, xyvals, (cart_gridx,cart_gridy), \
+    field_cart = griddata(xypoints, np.array(xyvals), (cart_gridx,cart_gridy), \
                         method='linear')  # Might want to change to cubic etc?
                               
     return field_cart, cart_x_points, cart_y_points
-
-
- 
     
     
     
@@ -184,19 +163,14 @@ def moment_integrate(vtx_field, x, y,edge):
     box_length = 2*A/len(x)
     box_area = box_length**2
 
-    # Set up moment diagnostics
-    M00 = 0
-    M10 = 0
-    M01 = 0
-    Marea = 0
+    # Set up coords
+    x = x[:,np.newaxis]
+    y = y[np.newaxis,:]
     # Integrate over vortex
-    for ix in range(len(x)):
-        for iy in range(len(y)):
-            
-            M00 += abs(vtx_field[ix,iy]-edge)*(x[ix]**0)*(y[iy]**0) 
-            M10 += abs(vtx_field[ix,iy]-edge)*(x[ix]**1)*(y[iy]**0) 
-            M01 += abs(vtx_field[ix,iy]-edge)*(x[ix]**0)*(y[iy]**1)
-            Marea += abs(vtx_field[ix,iy]-edge)*(x[ix]**0)*(y[iy]**0)*box_area
+    M00 = np.sum(np.abs(vtx_field-edge)*(x**0)*(y**0))
+    M10 = np.sum(np.abs(vtx_field-edge)*(x**1)*(y**0))
+    M01 = np.sum(np.abs(vtx_field-edge)*(x**0)*(y**1))
+    Marea = np.sum(np.abs(vtx_field-edge)*(x**0)*(y**0)*box_area)
             
     # Calculate centroid 
     centx = M10/M00
@@ -208,21 +182,12 @@ def moment_integrate(vtx_field, x, y,edge):
     latcent = np.arcsin((1-R)/(1+R))*RADDEG
 
     # Set up relative moment diagnostics 
-    J11=0
-    J20=0
-    J02=0
-    J22=0
-    J40=0
-    J04=0
-    for ix in range(len(x)):
-        for iy in range(len(y)):
-            
-            J11 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**1)*((y[iy]-centy)**1)
-            J20 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**2)*((y[iy]-centy)**0)
-            J02 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**0)*((y[iy]-centy)**2)
-            J22 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**2)*((y[iy]-centy)**2)
-            J40 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**4)*((y[iy]-centy)**0)
-            J04 += abs(vtx_field[ix,iy]-edge)*((x[ix]-centx)**0)*((y[iy]-centy)**4)   
+    J11 = np.sum(np.abs(vtx_field-edge)*((x-centx)**1)*((y-centy)**1))
+    J20 = np.sum(np.abs(vtx_field-edge)*((x-centx)**2)*((y-centy)**0))
+    J02 = np.sum(np.abs(vtx_field-edge)*((x-centx)**0)*((y-centy)**2))
+    J22 = np.sum(np.abs(vtx_field-edge)*((x-centx)**2)*((y-centy)**2))
+    J40 = np.sum(np.abs(vtx_field-edge)*((x-centx)**4)*((y-centy)**0))
+    J04 = np.sum(np.abs(vtx_field-edge)*((x-centx)**0)*((y-centy)**4))  
 
     # Calculate angle between x-axis and major axis of ellipse                  
     angle = 0.5*np.arctan((2*J11)/(J20-J02))*RADDEG

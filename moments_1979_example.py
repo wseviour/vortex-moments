@@ -6,6 +6,8 @@ WARNING: This takes about 15 mins to run
 """
 
 from netCDF4 import Dataset
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import vor
@@ -26,7 +28,7 @@ obj_area = np.empty(0)
 
 # Calculate diagnostics for each day
 for iday in range(len(days)):
-    print 'Calculating moments for day '+str(iday)
+    print('Calculating moments for day '+str(iday))
     moments = vor.calc_moments(gph[iday,:,:],lats,lons,'NH','GPH',3.02e4) 
     aspect = np.append(aspect, moments['aspect_ratio'])
     latcent = np.append(latcent, moments['centroid_latitude'])
@@ -34,6 +36,7 @@ for iday in range(len(days)):
     obj_area = np.append(obj_area, moments['objective_area'])
     
 # Plot timeseries    
+fig = plt.figure(figsize = (12,9))
 plt.subplot(4,1,1)
 plt.plot(aspect)
 plt.title('Aspect ratio')
@@ -48,4 +51,4 @@ plt.plot(obj_area)
 plt.title('Objective area')
 plt.xlabel('days from 1st Feb 1979')
 plt.tight_layout()
-plt.show()
+plt.savefig('test.png')

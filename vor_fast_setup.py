@@ -33,40 +33,19 @@ def calc_cart_map(lons, lats, hemisphere='NH'):
     # Convert lats and lons to radians
     lons = lons * DEGRAD
     lats = lats * DEGRAD
-    x = np.zeros((len(lons), len(lats)))
-    y = np.zeros((len(lons), len(lats)))
-    try: 
-        del xypoints
-    except NameError:
-        pass 
+    nlon_nlat = lons.shape[0]*lats.shape[0]
+    
+    if hemisphere == 'NH':
+        x = (np.cos(lons[:,np.newaxis])*np.cos(lats))/ (1. + np.sin(lats[np.newaxis,:]))               
+        y = (np.sin(lons[:,np.newaxis])*np.cos(lats[np.newaxis,:]))/(1. + np.sin(lats[np.newaxis,:]))
+          
+    elif hemisphere == 'SH':
+        x = (np.cos(lons[:,np.newaxis])*np.cos(lats[np.newaxis,:]))/(1. - np.sin(lats[np.newaxis,:]))               
+        y = (-np.sin(lons[:,np.newaxis])*np.cos(lats[np.newaxis,:]))/(1. - np.sin(lats[np.newaxis,:]))     
+        
+    else:
+        raise ValueError()        
+    
+    xypoints = np.stack([x.reshape(nlon_nlat),y.reshape(nlon_nlat)], axis = 1)
 
-
-    for ilon in range(len(lons)):
-        for ilat in range(len(lats)):
-            
-            if hemisphere == 'NH':
-                x[ilon,ilat] = (np.cos(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. + np.sin(lats[ilat]))               
-                y[ilon,ilat] = (np.sin(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. + np.sin(lats[ilat]))
-                try:
-                    xypoints
-                except NameError:                   
-                    xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
-                else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
-                                                             y[ilon,ilat]))))
-                 
-            if hemisphere == 'SH':
-                x[ilon,ilat] = (np.cos(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. - np.sin(lats[ilat]))               
-                y[ilon,ilat] = (-np.sin(lons[ilon])*np.cos(lats[ilat]))/ \
-                                   (1. - np.sin(lats[ilat]))            
-                try:
-                    xypoints
-                except NameError:                   
-                    xypoints = np.array((x[ilon,ilat],y[ilon,ilat]))
-                else:
-                    xypoints = np.vstack((xypoints,np.array((x[ilon,ilat], \
-                                                             y[ilon,ilat]))))
     return xypoints

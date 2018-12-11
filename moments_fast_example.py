@@ -6,6 +6,8 @@ for Feb-Mar 1979. This covers the splitting event around 21st February
 """
 
 from netCDF4 import Dataset
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import vor_fast
@@ -29,7 +31,7 @@ latcent = np.empty(0)
 
 # Calculate diagnostics for each day
 for iday in range(len(days)):
-    print 'Calculating moments for day '+str(iday)
+    print('Calculating moments for day '+str(iday))
     moments = vor_fast.calc_moments(gph_nh[iday,:,:],lats_nh,lons,xypoints,
                                     hemisphere='NH',field_type='GPH',
                                     edge=3.02e4,resolution='low')
@@ -38,10 +40,11 @@ for iday in range(len(days)):
 
 
 # Plot timeseries
+fig = plt.figure(figsize = (12,9))
 plt.subplot(2,1,1)
 plt.plot(aspect)
 plt.title('Aspect ratio')
 plt.subplot(2,1,2)
 plt.plot(latcent)
 plt.title('Centroid latitude')
-plt.show()
+plt.savefig('test_fast.png')
